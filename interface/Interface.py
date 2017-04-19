@@ -1,4 +1,4 @@
-from Tkinter import Tk, Canvas, SW, LAST, StringVar, Entry, NORMAL, DISABLED, Button
+from Tkinter import Tk, Canvas, SW, LAST, StringVar, Entry, NORMAL, DISABLED, Button, NW
 from Graphe import Graphe
 
 class Interface:
@@ -10,6 +10,7 @@ class Interface:
         self.id_sommets = {}
         self.positions_sommets = {}
         self.noms_sommets = {}
+        self.nb_trains_sommets = {}
         self.sommet_courant = None
         self.id_arcs = {}
         self.nom_sommet_courant = StringVar()
@@ -17,14 +18,20 @@ class Interface:
         self.ordre_rotor = StringVar()
         self.input_ordre = Entry(self.fenetre, textvariable=self.ordre_rotor, width=30, state=DISABLED)
         self.bouton_rotationner = Button(self.fenetre, text="Rotationner", command=self.rotationner, state=DISABLED)
+        self.bouton_ajout_train = Button(self.fenetre, text='   +   ', command=self.ajouter_train, state=DISABLED)
+        self.bouton_enlever_train = Button(self.fenetre, text='   -   ', command=self.enlever_train, state=DISABLED)
+        self.bouton_simulation = Button(self.fenetre, text='Simuler', command=self.simulation)
 
     def pack(self):
         self.nom_sommet_courant.trace("w", lambda _, __, ____: self.changer_nom_sommet())
         self.ordre_rotor.trace("w", lambda _, __, ___: self.changer_ordre_rotor())
-        self.input_nom.grid(row=0, column=0)
-        self.toile.grid(row=0, column=1, rowspan=3)
-        self.input_ordre.grid(row=1, column=0)
-        self.bouton_rotationner.grid(row=2, column=0)
+        self.input_nom.grid(row=0, column=0, columnspan=2)
+        self.toile.grid(row=0, column=2, rowspan=3)
+        self.input_ordre.grid(row=1, column=0, columnspan=2)
+        self.bouton_ajout_train.grid(row=2, column=0)
+        self.bouton_enlever_train.grid(row=2, column=1)
+        self.bouton_rotationner.grid(row=3, column=1)
+        self.bouton_simulation.grid(row=3, column=0)
         self.toile.bind('<Button-1>', self.clique_gauche)
         self.toile.bind('<Button-3>', self.clique_droit)
 
@@ -38,6 +45,8 @@ class Interface:
         self.input_nom.config(state=NORMAL)
         self.input_ordre.config(state=NORMAL)
         self.bouton_rotationner.config(state=NORMAL)
+        self.bouton_ajout_train.config(state=NORMAL)
+        self.bouton_enlever_train.config(state=NORMAL)
         self.nom_sommet_courant.set(self.toile.itemcget(self.noms_sommets[s], "text"))
         self.ordre_rotor.set(" ".join(map(str, self.graphe.voisins_sortants[s])))
 
@@ -47,6 +56,8 @@ class Interface:
         self.input_nom.config(state=DISABLED)
         self.input_ordre.config(state=DISABLED)
         self.bouton_rotationner.config(state=DISABLED)
+        self.bouton_ajout_train.config(state=DISABLED)
+        self.bouton_enlever_train.config(state=DISABLED)
         self.nom_sommet_courant.set('')
         self.ordre_rotor.set('')
 
@@ -64,9 +75,7 @@ class Interface:
                 width = 3
             self.toile.itemconfig(self.id_arcs[(s1, s2)], width=width, fill=couleur)
         else :
-            self.id_arcs[(s1, s2)] = self.toile.create_line(p_s1[0], p_s1[1], p_s2[0], p_s2[1], arrow=LAST, width=width,
-                                                        fill=couleur)
-
+            self.id_arcs[(s1, s2)] = self.toile.create_line(p_s1[0], p_s1[1], p_s2[0], p_s2[1], arrow=LAST, width=width, fill=couleur)
 
     def clique_gauche(self, e=None):
         s = self.est_sur_sommet(e.x, e.y)
@@ -87,6 +96,7 @@ class Interface:
             else:
                 self.toile.coords(self.id_sommets[self.sommet_courant], e.x-15, e.y-15, e.x+15, e.y+15)
                 self.toile.coords(self.noms_sommets[self.sommet_courant], e.x+15, e.y-15)
+                self.toile.coords(self.nb_trains_sommets[self.sommet_courant], e.x+15, e.y+15)
                 self.positions_sommets[self.sommet_courant] = (e.x, e.y)
 
                 for v in self.graphe.voisins_entrants[self.sommet_courant]:
@@ -107,6 +117,7 @@ class Interface:
                 self.graphe.ajouter_sommet(id)
                 self.positions_sommets[id] = (e.x, e.y)
                 self.noms_sommets[id] = self.toile.create_text(e.x+15, e.y-15, text=id, anchor=SW)
+                self.nb_trains_sommets[id] = self.toile.create_text(e.x+15, e.y+15, text=self.graphe.trains[id] if id in self.graphe.trains else '', anchor=NW, fill='deep sky blue')
 
 
     def clique_droit(self,e=None):
@@ -125,9 +136,11 @@ class Interface:
 
             self.toile.delete(self.id_sommets[s])
             self.toile.delete(self.noms_sommets[s])
+            self.toile.delete(self.nb_trains_sommets[s])
             del self.noms_sommets[s]
             del self.id_sommets[s]
             del self.positions_sommets[s]
+            del self.nb_trains_sommets[s]
             self.graphe.enelever_sommet(s)
 
     def rotationner(self, e=None):
@@ -135,6 +148,16 @@ class Interface:
             self.graphe.rotationer(self.sommet_courant)
             for v in self.graphe.voisins_sortants[self.sommet_courant]:
                 self.dessiner_arc(self.sommet_courant, v)
+
+    def ajouter_train(self):
+        if self.sommet_courant:
+            self.graphe.ajouter_train(self.sommet_courant)
+            self.toile.itemconfig(self.nb_trains_sommets[self.sommet_courant], text=self.graphe.trains[self.sommet_courant])
+
+    def enlever_train(self):
+        if self.sommet_courant:
+            self.graphe.enelever_train(self.sommet_courant)
+            self.toile.itemconfig(self.nb_trains_sommets[self.sommet_courant], text=self.graphe.trains[self.sommet_courant] if self.sommet_courant in self.graphe.trains else '')
 
     def est_sur_sommet(self, x, y):
         for id, position in self.positions_sommets.items():
@@ -149,11 +172,21 @@ class Interface:
     def changer_ordre_rotor(self):
         if self.sommet_courant:
             try:
-                self.graphe.changer_ordre_voisin(self.sommet_courant, list(map(int, self.ordre_rotor.get().split())))
+                if list(map(int, self.ordre_rotor.get().split())) != self.graphe.voisins_sortants[self.sommet_courant]:
+                    self.graphe.changer_ordre_voisin(self.sommet_courant, list(map(int, self.ordre_rotor.get().split())))
                 for v in self.graphe.voisins_sortants[self.sommet_courant]:
                     self.dessiner_arc(self.sommet_courant, v)
             except Exception:
                 pass
+
+    def simulation(self):
+        self.graphe.simuler()
+        for arc in self.id_arcs:
+            s1 = arc[0]
+            s2 = arc[1]
+            self.dessiner_arc(s1, s2)
+        for id, text in self.nb_trains_sommets.items():
+            self.toile.itemconfig(text, text=self.graphe.trains[id] if id in self.graphe.trains else '')
 
 if __name__ == '__main__':
     i = Interface()
