@@ -1,5 +1,7 @@
 from multiprocessing.dummy import Pool, Lock
-from time import time
+from copy import deepcopy
+from collections import deque
+from sys import stderr
 
 class Graphe:
     def __init__(self):
@@ -7,6 +9,8 @@ class Graphe:
         self.voisins_sortants = {}
         self.rotors = {}
         self.trains = {}
+        self.arcs = {}
+        self.id_arc = 0
 
     def ajouter_sommet(self, id):
         self.voisins_entrants[id] = []
@@ -16,23 +20,33 @@ class Graphe:
     def enelever_sommet(self, id):
         for v in self.voisins_entrants[id]:
             self.voisins_sortants[v].remove(id)
+            if (v, id) in self.arcs.values():
+                del self.arcs[self.arcs.keys()[self.arcs.values().index((v, id))]]
         for v in self.voisins_sortants[id]:
             self.voisins_entrants[v].remove(id)
+            if (id, v) in self.arcs.values():
+                del self.arcs[self.arcs.keys()[self.arcs.values().index((id, v))]]
         del self.voisins_sortants[id]
         del self.voisins_entrants[id]
         del self.rotors[id]
         if id in self.trains:
             del self.trains[id]
 
-    def ajouter_arc(self, s1, s2):
+    def ajouter_arc(self, s1, s2, id_arc=-1):
         self.voisins_sortants[s1].append(s2)
         self.voisins_entrants[s2].append(s1)
+        if id_arc != -1:
+            self.arcs[id_arc] = (s1, s2)
+        else:
+            self.arcs[self.id_arc] = (s1, s2)
+            self.id_arc += 1
         if self.rotors[s1] == -1:
             self.rotors[s1] = 0
 
     def enlever_arc(self, s1, s2):
         self.voisins_sortants[s1].remove(s2)
         self.voisins_entrants[s2].remove(s1)
+        del self.arcs[self.arcs.keys()[self.arcs.values().index((s1, s2))]]
         if self.voisins_sortants[s1]:
             self.rotors[s1] = 0
         else:
@@ -72,6 +86,21 @@ class Graphe:
         else:
             return -1
 
+    def peut_acceder(self, s1, s2):
+        filo = deque()
+        filo.append(s1)
+        deja_vue = [s1]
+
+        while filo:
+            courant = filo.pop()
+            for v in self.voisins_sortants[courant]:
+                if v not in deja_vue:
+                    if v == s2:
+                        return True
+                    deja_vue.append(v)
+                    filo.append(v)
+        return False
+
     def simuler(self):
         def circuler(id):
             while self.voisins_sortants[id]:
@@ -94,25 +123,57 @@ class Graphe:
         pool = Pool(2)
         return pool.map(circuler, trains)
 
+    def liste_spanning_tree(self, s):
+        def _recursivite(g):
+            if len(g.rotors) == 1:
+                return [[]]
+            arc = g.arcs[g.arcs.keys()[0]]
+
+            g1 = deepcopy(g)
+            g1.enlever_arc(arc[0], arc[1])
+            st_sans_arc = []
+            if g1.peut_acceder(arc[0], s):
+                st_sans_arc = _recursivite(g1)
+
+            g2 = deepcopy(g)
+            for v in g2.voisins_entrants[arc[0]]:
+                if v != arc[1]:
+                    print >> stderr, g2.arcs
+                    g2.ajouter_arc(v, arc[1], g2.arcs.keys()[g2.arcs.values().index((v, arc[0]))])
+            g2.enelever_sommet(arc[0])
+            st_avec_arc = _recursivite(g2)
+
+            id_arc = g.arcs.keys()[g.arcs.values().index(arc)]
+            for i in xrange(len(st_avec_arc)):
+                st_avec_arc[i].append(id_arc)
+            return st_avec_arc + st_sans_arc
+
+        if not self.voisins_sortants[s]:
+            liste_arcs_supprimes = []
+            for v in self.voisins_sortants[s]:
+                self.enlever_arc(s, v)
+                liste_arcs_supprimes += [(s, v)]
+        print(_recursivite(self))
+
+
 if __name__ == '__main__':
     g = Graphe()
     g.ajouter_sommet(1)
     g.ajouter_sommet(2)
     g.ajouter_sommet(3)
-    g.ajouter_arc(2, 1)
+    g.ajouter_sommet(4)
+    g.ajouter_sommet(5)
+
+    g.ajouter_arc(1, 2)
     g.ajouter_arc(2, 3)
     g.ajouter_arc(3, 1)
-    g.ajouter_arc(3, 2)
-    g.ajouter_train(2, 100000)
-    g.ajouter_train(3, 100000)
-    if g.get_sommet_pointe(2) == 1:
-        g.rotationer(2)
-    if g.get_sommet_pointe(3) == 1:
-        g.rotationer(3)
-    start = time()
-    print g.simuler()
-    stop = time()
-    print stop - start
-    print g.voisins_sortants
-    print g.rotors
-    print g.trains
+    g.ajouter_arc(1, 4)
+    g.ajouter_arc(2, 4)
+    g.ajouter_arc(3, 4)
+    g.ajouter_arc(4, 1)
+    g.ajouter_arc(4, 2)
+    g.ajouter_arc(4, 3)
+    g.ajouter_arc(1, 5)
+    g.ajouter_arc(2, 5)
+    g.ajouter_arc(3, 5)
+    g.liste_spanning_tree(5)
