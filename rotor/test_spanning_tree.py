@@ -116,4 +116,12 @@ def list_spanning_tree(s):
     a = deepcopy(arcs)
     return recursivite(vs, ve, a, 0)
 
-print len(list_spanning_tree(5))
+spanning_trees = list_spanning_tree(5)
+for st in spanning_trees:
+    vs = {}
+    for id_arc in st:
+        arc = arcs[id_arc]
+        if arc[0] not in vs:
+            vs[arc[0]] = []
+        vs[arc[0]].append(arc[1])
+    print()
