@@ -138,7 +138,6 @@ class Graphe:
             g2 = deepcopy(g)
             for v in g2.voisins_entrants[arc[0]]:
                 if v != arc[1]:
-                    print >> stderr, g2.arcs
                     g2.ajouter_arc(v, arc[1], g2.arcs.keys()[g2.arcs.values().index((v, arc[0]))])
             g2.enelever_sommet(arc[0])
             st_avec_arc = _recursivite(g2)
@@ -163,17 +162,17 @@ if __name__ == '__main__':
     g.ajouter_sommet(3)
     g.ajouter_sommet(4)
     g.ajouter_sommet(5)
-
     g.ajouter_arc(1, 2)
     g.ajouter_arc(2, 3)
     g.ajouter_arc(3, 1)
+    g.ajouter_arc(4, 2)
+    g.ajouter_arc(4, 3)
+    g.ajouter_arc(4, 1)
     g.ajouter_arc(1, 4)
     g.ajouter_arc(2, 4)
     g.ajouter_arc(3, 4)
-    g.ajouter_arc(4, 1)
-    g.ajouter_arc(4, 2)
-    g.ajouter_arc(4, 3)
     g.ajouter_arc(1, 5)
     g.ajouter_arc(2, 5)
     g.ajouter_arc(3, 5)
-    g.liste_spanning_tree(5)
+    print(g.arcs)
+    g.liste_spanning_tree(1)
