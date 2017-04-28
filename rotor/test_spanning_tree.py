@@ -26,33 +26,26 @@ def list_spanning_trees(voisins_sortants, puit):
     def _recursivite():
         if not arcs_normaux:
             return [[]]
-        id_arc = next(iter(arcs_normaux))
+        id_arc = arcs_normaux.pop()
         arc = arcs[id_arc]
 
         # Appel a gauche
-        arcs_normaux.remove(id_arc)
-        arcs_supprimes.add(id_arc)
         st_sans_arc = []
         if _accessibilite(arc[0], puit):
             st_sans_arc = _recursivite()
-        arcs_supprimes.remove(id_arc)
-        arcs_normaux.add(id_arc)
 
         # Appel a droite
-        arcs_normaux.remove(id_arc)
         arcs_fusionnes.add(id_arc)
         arcs_retires = set()
         for a in sommets[arc[0]]:
             if a in arcs_normaux:
                 arcs_normaux.remove(a)
-                arcs_supprimes.add(a)
                 arcs_retires.add(a)
         st_avec_arc = []
         if not _accessibilite(arc[1], arc[0], mode=FUSIONNE):
             st_avec_arc = _recursivite()
         for a in arcs_retires:
             arcs_normaux.add(a)
-            arcs_supprimes.remove(a)
         arcs_normaux.add(id_arc)
         arcs_fusionnes.remove(id_arc)
 
@@ -66,7 +59,6 @@ def list_spanning_trees(voisins_sortants, puit):
     FUSIONNE = 2
     arcs = {}
     arcs_normaux = set()
-    arcs_supprimes = set()
     arcs_fusionnes = set()
     sommets = {}
     for s, v_sortants in voisins_sortants.items():
