@@ -1,3 +1,3 @@
 from __future__ import absolute_import
 
-from .rotor import RotorGraph
+from .rotor import RotorGraph, ChipsConfig, RotorConfig

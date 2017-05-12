@@ -1,5 +1,6 @@
-#TODO doc de la bibliotheque rotor
+# TODO doc de la bibliotheque rotor
 from sage.graphs.all import DiGraph
+
 
 class RotorGraph(DiGraph):
     # TODO doc de la classe RotorGraph
@@ -22,16 +23,76 @@ class RotorGraph(DiGraph):
         for vertex in [v for v in self.vertices() if v not in self._rotor_orders]:
             self._rotor_orders[vertex] = self.neighbors_out(vertex)
 
-class RotorConfig():
+
+class RotorConfig:
     # TODO doc de la classe RotorConfig
     def __init__(self, rotor_graph, rotor_indexes):
         # TODO doc de la methode __init__
         self._rotor_graph = rotor_graph
         self._rotor_indexes = rotor_indexes
 
-class ChipsConfig():
+
+class ChipsConfig:
     # TODO doc de la classe ChipsConfig
     def __init__(self, rotor_graph, chips):
         # TODO doc de la methode __init__
         self._rotor_graph = rotor_graph
-        self._chips = chips
+        self._chips = {}
+        if isinstance(chips, list):
+            vertices = self._rotor_graph.vertices()
+            for i in range(len(vertices)):
+                if i < len(chips):
+                    self._chips[vertices[i]] = chips[i]
+                else:
+                    self._chips[vertices[i]] = 0
+        elif isinstance(chips, dict):
+            for vertex, chipsCount in chips.items():
+                self._chips[vertex] = chipsCount
+            for vertex in [v for v in self._rotor_graph.vertices() if v not in self._chips]:
+                self._chips[vertex] = 0
+        else:
+            for vertex in self._rotor_graph.vertices():
+                self._chips[vertex] = 0
+
+    def values(self):
+        # TODO doc de la methode values
+        return [self._chips[v] for v in self._rotor_graph.vertices()]
+
+    def chips_count(self, vertex=None):
+        # TODO doc de la methode chips_count
+        if vertex != None:
+            return self._chips[vertex]
+        else:
+            return sum(self.values())
+
+    def add_chips_to_vertex(self, quantity, vertex):
+        # TODO doc de la methode add_chips_to_vertex
+        self._chips[vertex] += quantity
+
+    def sub_chips_to_vertex(self, quantity, vertex):
+        # TODO doc de la methode sub_chips_to_vertex
+        self._chips[vertex] -= quantity
+
+    def add_chips_to_vertices(self, quantity, vertices):
+        # TODO doc de la methode add_chips_to_vertices
+        for vertex in vertices:
+            self._chips[vertex] += quantity
+
+    def sub_chips_to_vertices(self, quantity, vertices):
+        # TODO doc de la methode sub_chips_to_vertices
+        for vertex in vertices:
+            self._chips[vertex] += quantity
+
+    def add_chips(self, chips):
+        # TODO doc de la methode add_chips
+        for vertex, quantity in chips.items():
+            self._chips[vertex] += quantity
+
+    def subb_chips(self, chips):
+        # TODO doc de la methode sub_chips
+        for vertex, quantity in chips.items():
+            self._chips[vertex] -= quantity
+
+    def __len__(self):
+        # TODO doc de la methode __len__
+        return self.chips_count()
