@@ -86,6 +86,35 @@
 					\item \textbf{rotor\_graph}\newline
 					Le graphe rotor (classe "RotorGraph", voir \ref{sec:RotorGraph}) auquel est associé la configuration de rotor.
 				\end{itemize}
+            
+            \subsubsection{Méthodes}
+                \begin{itemize}
+                    \item \textbf{\_\_init\_\_}\newline
+                    Constructeur de la classe.
+                    \begin{itemize}
+                        \item \textit{rotor\_graphe}\newline
+                        le graphe rotor (objet de la classe "RotorGraph", voir \ref{sec:RotorGraph}) auquel la configuration de \textit{rotor} est associée.
+                        \item \textit{rotor\_indexes}\newline
+                        L'index du rotor associé à chaque sommets. Le paramètre peut être de plusieurs types :
+                        \begin{itemize}
+                            \item dict : un dictionnaire associant à chaque sommet l'index du sommet vers lequel le \textit{rotor} pointe. Les sommets non donnés sont initialisé à zéro \textit{chips}
+                            \item list : chaque élément de la liste étant l'index du sommet vers lequel le rotor pointe. Si la liste est plus petite, elle est complétée par des zéro.
+                            \item autres types : tous les index sont mis à zéro.
+                        \end{itemize}
+                    \end{itemize}
+                    \item \textbf{indexes}\newline
+                    Permet de récupérer ou de modifier le paramètre \textit{rotor\_indexes}.
+                    \item \textbf{rotor}\newline
+                    Permet de récupérer ou de modifier le paramètre \textit{rotor\_graphe}.
+                    \item \textbf{pointed\_vertex}\newline
+                    Permet de récupérer l'indice du sommet sur lequel le rotor du sommet donné en paramètre pointe.
+                    \item \textbf{pointed\_vertices}\newline
+                    Permet de récupérer l'indice de tous les sommets sur lesquels le rotor des sommets du graphe donné en paramètre pointe grâce au dictionnaire donné en paramètre.
+                    \item \textbf{change\_rotor\_position}\newline
+                    Permet de changer l'indice du sommet sur lequel le rotor du sommet donné en paramètre pointe.
+                    \item \textbf{change\_rotors\_positions}\newline
+                    Permet de changer l'indice de tous les sommets sur lesquels le rotor des sommets du graphe donné en paramètre pointe grâce au dictionnaire donné en paramètre.
+                \end{itemize}
 	
 		\subsection{ChipsConfig}
 			\paragraph*{}
