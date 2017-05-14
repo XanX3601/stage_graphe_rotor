@@ -23,6 +23,9 @@ class RotorGraph(DiGraph):
         for vertex in [v for v in self.vertices() if v not in self._rotor_orders]:
             self._rotor_orders[vertex] = self.neighbors_out(vertex)
 
+    def default_config(self):
+        return ChipsConfig()
+
 
 class RotorConfig:
     # TODO doc de la classe RotorConfig

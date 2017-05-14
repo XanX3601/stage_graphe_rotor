@@ -64,6 +64,8 @@
 						\item \textit{rotor\_orders}\newline
 						Dictionnaire associant à un sommet une liste donnant l'ordre de rotation du rotor (voir le champ "rotor\_orders" de la classe "RotorGraph", voir \ref{sec:RotorGraph-Champ}). Tout sommet ne figurant pas dans le dictionnaire sera initialisé comme étant égal à la liste de ses voisins sortants. 
 					\end{itemize}
+					\item \textbf{default\_config}\newline
+					Renvoie la configuration de rotor par défaut du graphe appelant (Tous les rotors pointent vers le premier voisins de leur liste d'ordre de rotor)
 				\end{itemize}
 	
 		\subsection{RotorConfig}
