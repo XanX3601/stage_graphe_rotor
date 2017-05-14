@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #TODO doc de la bibliotheque rotor
 r"""
 <Very short 1-line summary>
@@ -25,7 +26,7 @@ EXAMPLES::
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 
-
+# TODO doc de la bibliotheque rotor
 from sage.graphs.all import DiGraph
 
 class RotorGraph(DiGraph):
@@ -47,26 +48,24 @@ class RotorGraph(DiGraph):
                         if self.has_vertex(neighbor) and neighbor in self.neighbors_out(vertex):
                             self._rotor_orders[vertex].append(neighbor)
         for vertex in [v for v in self.vertices() if v not in self._rotor_orders]:
-		    self._rotor_orders[vertex] = self.neighbors_out(vertex)
+            self._rotor_orders[vertex] = self.neighbors_out(vertex)
 	
     def fire_vertex(self, chips_config, rotor_config, vertex, number_of_fire):
         # TODO doc de la methode fire_vertice
         pass
+
     def fire_vertices(self, chips_config, rotor_config, number_of_fire = None):
         # TODO doc de la methode fire_vertices
         pass
+
     def stabilization(self, chips_config, rotor_config):
         # TODO doc de la methode stabilization
         pass
-    def order(new_order=None):
-        # TODO doc de la methode order
-        if new_order:
-            self._rotor_orders = new_order
-        else:
-            return self._rotor_orders
-            
 
-class RotorConfig():
+    def default_config(self):
+        return ChipsConfig(self)
+
+class RotorConfig:
     # TODO doc de la classe RotorConfig
     def __init__(self, rotor_graph, rotor_indexes):
         # TODO doc de la methode __init__
@@ -75,17 +74,17 @@ class RotorConfig():
         if isinstance(rotor_indexes,dict):
             self._rotor_indexes = rotor_indexes
         elif isinstance(rotor_indexes,list):
-            for i in range(len(_rotor_graph.vertices())):
-                self._rotor_indexes[_rotor_graph.vertices] = rotor_indexes[i]
+            for i in range(len(self._rotor_graph.vertices())):
+                self._rotor_indexes[self._rotor_graph.vertices] = rotor_indexes[i]
                 
-    def indexes(new_index=None):
+    def indexes(self, new_index=None):
         # TODO doc de la methode index
         if new_index:
             self._rotor_indexes = new_index
         else:
             return self._rotor_indexes
              
-    def rotor(new_rotor=None):
+    def rotor(self, new_rotor=None):
         # TODO doc de la methode index
         if new_rotor:
             self._rotor_graph = new_rotor
@@ -93,7 +92,7 @@ class RotorConfig():
             return self._rotor_graph
           
     def pointed_vertex(self, vertex):
-	    # TODO doc de la methode pointed_vertice
+        # TODO doc de la methode pointed_vertice
         return self.rotor().order()[self.indexes()[vertex]]
 		
     def pointed_vertices(self, vertices):
@@ -111,10 +110,68 @@ class RotorConfig():
         # TODO doc de la methode change_rotors_positions
         for i in new_rotors:
             self.indexes()[i] = self.rotor().order().index(new_rotors[i])
-	
-class ChipsConfig():
+
+class ChipsConfig:
     # TODO doc de la classe ChipsConfig
-    def __init__(self, rotor_graph, chips):
+    def __init__(self, rotor_graph, chips=None):
         # TODO doc de la methode __init__
         self._rotor_graph = rotor_graph
-        self._chips = chips
+        self._chips = {}
+        if isinstance(chips, list):
+            vertices = self._rotor_graph.vertices()
+            for i in range(len(vertices)):
+                if i < len(chips):
+                    self._chips[vertices[i]] = chips[i]
+                else:
+                    self._chips[vertices[i]] = 0
+        elif isinstance(chips, dict):
+            for vertex, chipsCount in chips.items():
+                self._chips[vertex] = chipsCount
+            for vertex in [v for v in self._rotor_graph.vertices() if v not in self._chips]:
+                self._chips[vertex] = 0
+        else:
+            for vertex in self._rotor_graph.vertices():
+                self._chips[vertex] = 0
+
+    def values(self):
+        # TODO doc de la methode values
+        return [self._chips[v] for v in self._rotor_graph.vertices()]
+
+    def chips_count(self, vertex=None):
+        # TODO doc de la methode chips_count
+        if vertex != None:
+            return self._chips[vertex]
+        else:
+            return sum(self.values())
+
+    def add_chips_to_vertex(self, quantity, vertex):
+        # TODO doc de la methode add_chips_to_vertex
+        self._chips[vertex] += quantity
+
+    def sub_chips_to_vertex(self, quantity, vertex):
+        # TODO doc de la methode sub_chips_to_vertex
+        self._chips[vertex] -= quantity
+
+    def add_chips_to_vertices(self, quantity, vertices):
+        # TODO doc de la methode add_chips_to_vertices
+        for vertex in vertices:
+            self._chips[vertex] += quantity
+
+    def sub_chips_to_vertices(self, quantity, vertices):
+        # TODO doc de la methode sub_chips_to_vertices
+        for vertex in vertices:
+            self._chips[vertex] += quantity
+
+    def add_chips(self, chips):
+        # TODO doc de la methode add_chips
+        for vertex, quantity in chips.items():
+            self._chips[vertex] += quantity
+
+    def subb_chips(self, chips):
+        # TODO doc de la methode sub_chips
+        for vertex, quantity in chips.items():
+            self._chips[vertex] -= quantity
+
+    def __len__(self):
+        # TODO doc de la methode __len__
+        return self.chips_count()
