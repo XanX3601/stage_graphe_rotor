@@ -3538,7 +3538,8 @@ class DiGraph(GenericGraph):
 
         ::
 
-            sage: G = DiGraph({1:[2,3], 2:[1,4], 3:[1,4], 4:[2,3]}, format='dict_of_lists')
+            sage: G = DiGraph({1:[2,3], 2:[1,4], 3:[1,4], 4:[2,3]}, \
+                        format='dict_of_lists')
             sage: list(G.spanning_trees(1))
             [Digraph on 4 vertices,
              Digraph on 4 vertices,
@@ -3612,20 +3613,27 @@ class DiGraph(GenericGraph):
             This function makes use of the following to keep track of
             partial spanning trees:
                 lits_of_edges -- list of edges in the current ``DiGraph``
-                list_merges_edges -- list of edges that are currently merged
-                graph -- a copy of the current ``DiGraph`` where edges have an appropriate label
+                list_merges_edges -- list of edges' labels that have been merged
+                D -- a copy of the current ``DiGraph`` where edges have an \
+                        appropriate label
             """
             if len(list_merged_edges) == self.order()-1:
                 # We have enough merged edges to form a spanning_tree
-                # We iterate over the lists of labels in lis_merged_edges and yield the corresponding spanning_trees
+                # We iterate over the the product of list_merged_edges to get
+                # every spanning trees
                 for indexes in product(*list_merged_edges):
-                    yield DiGraph([list_edges[index] for index in indexes], format='list_of_edges', pos=self.get_pos())
+                    yield DiGraph([list_edges[index] for index in indexes],
+                                  format='list_of_edges', pos=self.get_pos())
 
             # 1) Clean the graph
-            # delete loops on source if any
-            D.delete_edges(D.incoming_edge_iterator(source))
+            D.delete_edges(edges_to_delete_from_source())
 
-            # merge multi-edges if any by concatenating their labels
+            # if D has multi edges
+            # We replace multi edges by an unique one that has for label, the
+            # labels of all the multi edges
+            # To give an exemple:
+            # Two edges labeled A and B from vertex 1 to 2 will be replaced
+            # by an edge labeled (A, B) from vertex 1 to 2
             if D.has_multiple_edges():
                 merged_multiple_edges = {}
                 for u,v,l in D.multiple_edges():
@@ -3637,50 +3645,108 @@ class DiGraph(GenericGraph):
                 D.add_edges([(u, v, l) for (u, v),l in merged_multiple_edges.items()])
 
             # 2) Pick an edge e outgoing from the source
-            s, x, l = D.outgoing_edge_iterator(source).next()
+            picked_edge = pick_an_edge()
 
             # 3) Find all spanning_trees that do not contain e
             # by first removing it
-            D.delete_edge(s, x, l)
-            if len(list(D.depth_first_search(source))) == D.order():
+            D.delete_edge(picked_edge)
+            # Test if there is at least one path from source to any vertices
+            # If not, no need to go further
+            if source_can_access_all():
                for tree in _rec_spanning_trees():
                    yield tree
-            D.add_edge(s, x, l)
+            D.add_edge(picked_edge)
 
-            # 4) Find all spanning_trees that do contain e by merging the end vertices of e
+            # 4) Find all spanning_trees that do contain e by merging the
+            # end vertices of e
 
-            # store different edges to unmerged the end vertices of e
-            out_source = D.outgoing_edges(source)
-            out_source.remove((s, x, l))
-            out_x = D.outgoing_edges(x)
-            in_x = D.incoming_edges(x)
+            # store different edges to unmerge the end vertices of e
+            source_edges = edges_to_save()
+            source_edges.remove(picked_edge)
+            out_x = D.outgoing_edges(get_x(picked_edge))
+            in_x = D.incoming_edges(get_x(picked_edge))
 
-            D.merge_vertices((source, x))
+            D.merge_vertices((source, get_x(picked_edge)))
 
-            list_merged_edges.add(l)
+            list_merged_edges.add(get_label(picked_edge))
 
             for tree in _rec_spanning_trees():
                 yield tree
 
-            list_merged_edges.remove(l)
+            list_merged_edges.remove(get_label(picked_edge))
 
             # unmerge the end vertices of e
             D.delete_vertex(source)
-            D.add_edges(chain(out_source + out_x + in_x))
+            D.add_edges(chain(source_edges + out_x + in_x))
+
+        # Declare variables and functions according to the parameters format
+        D = DiGraph(multiedges=True, loops=True)
+        if format == 'out':
+            # function used to check if self contains spanning trees or not
+            check_spanning_trees_existence = lambda: len(
+                list(self.depth_first_search(source))) == self.order()
+            # function used to check if an edge (u, v) from self is to be put in
+            # D, the digraph used to compute spanning trees
+            is_edge_to_keep = lambda u, v: u != v and v != source
+            # function returning the edges to delete from source at each
+            # recursive step
+            edges_to_delete_from_source = lambda: D.incoming_edge_iterator(
+                source)
+            # function returning an edge outgoing from source
+            pick_an_edge = lambda: D.outgoing_edge_iterator(source).next()
+            # function used to get the vertex x from an edge (source, x, label)
+            get_x = lambda picked_edge: picked_edge[1]
+            # function used to get the label of an edge define as
+            # (source, x, label)
+            get_label = lambda picked_edge: picked_edge[2]
+            # function checking if a path exists beetween source and every
+            # other vertices in D
+            source_can_access_all = lambda: len(list(D.depth_first_search(source))) == D.order()
+            # function returning a list of edges outgoing from source
+            edges_to_save = lambda: D.outgoing_edges(source)
+        elif format == 'in':
+            # function used to check if self contains spanning trees or not
+            check_spanning_trees_existence = lambda: len(list(
+                self.depth_first_search(source,
+                                        neighbors=self.neighbor_in_iterator))) == self.order()
+            # function used to check if an edge (u, v) from self is to be put in
+            # D, the digraph used to compute spanning trees
+            is_edge_to_keep = lambda u, v: u != v and u != source
+            # function returning the edges to delete from source at each
+            # recursive step
+            edges_to_delete_from_source = lambda: D.outgoing_edge_iterator(
+                source)
+            # function returning an edge coming in source
+            pick_an_edge = lambda: D.incoming_edge_iterator(source).next()
+            # function used to get the vertex x from an edge (x, source, label)
+            get_x = lambda picked_edge: picked_edge[0]
+            # function used to get the label of an edge define as
+            # (source, x, label)
+            get_label = lambda picked_edge: picked_edge[2]
+            # function checking if a path exists beetween source and every
+            # other vertices in D by neighbors in
+            source_can_access_all = lambda: len(list(
+                D.depth_first_search(source,
+                                     neighbors=D.neighbor_in_iterator))) == D.order()
+            # function returning a list of edges coming in source
+            edges_to_save = lambda: D.incoming_edges(source)
+        else:
+            raise ValueError("Unknown input format '{}'".format(format))
 
         if not self.has_vertex(source):
             return
 
         # check if the source can access to every other vertex
-        if len(list(self.depth_first_search(source))) < self.order():
+        if not check_spanning_trees_existence():
             return
 
-        # We build a copy of the current Digraph removing loops and edges coming in sources
-        # We give to every edge a label corresponding to its index in the list of edges of the current digraph
-        D = DiGraph(multiedges=True, loops=True)
+        # We build a copy of the current Digraph keeping edges only valid by
+        # by using function is_edge_to_keep
+        # We give to every kept edge a label which is its index in self's edges
+        # list
         list_edges = self.edges()
         for i,(u,v,_) in enumerate(list_edges):
-            if u != v and v != source:
+            if is_edge_to_keep(u, v):
                 D.add_edge(u,v,(i,))
         list_merged_edges = set()
         return _rec_spanning_trees()
